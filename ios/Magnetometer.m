@@ -43,10 +43,12 @@ RCT_REMAP_METHOD(isAvailable,
 
 - (void) isAvailableWithResolver:(RCTPromiseResolveBlock) resolve
                         rejecter:(RCTPromiseRejectBlock) reject {
-    if([self->_motionManager isMagnetometerAvailable])
+//    if([self->_motionManager isMagnetometerAvailable])
+    if([self->_motionManager isDeviceMotionAvailable])
     {
         /* Start the accelerometer if it is not active already */
-        if([self->_motionManager isMagnetometerActive] == NO)
+//        if([self->_motionManager isMagnetometerActive] == NO)
+        if([self->_motionManager isDeviceMotionActive] == NO)
         {
             resolve(@YES);
         } else {
@@ -66,7 +68,8 @@ RCT_EXPORT_METHOD(setUpdateInterval:(double) interval) {
 
     double intervalInSeconds = interval / 1000;
 
-    [self->_motionManager setMagnetometerUpdateInterval:intervalInSeconds];
+//    [self->_motionManager setMagnetometerUpdateInterval:intervalInSeconds];
+    [self->_motionManager setDeviceMotionUpdateInterval:intervalInSeconds];
 }
 
 RCT_EXPORT_METHOD(setLogLevel:(int) level) {
@@ -78,7 +81,8 @@ RCT_EXPORT_METHOD(setLogLevel:(int) level) {
 }
 
 RCT_EXPORT_METHOD(getUpdateInterval:(RCTResponseSenderBlock) cb) {
-    double interval = self->_motionManager.magnetometerUpdateInterval;
+//    double interval = self->_motionManager.magnetometerUpdateInterval;
+    double interval = self->_motionManager.deviceMotionUpdateInterval;
 
     if (self->logLevel > 0) {
         NSLog(@"getUpdateInterval: %f", interval);
@@ -88,9 +92,14 @@ RCT_EXPORT_METHOD(getUpdateInterval:(RCTResponseSenderBlock) cb) {
 }
 
 RCT_EXPORT_METHOD(getData:(RCTResponseSenderBlock) cb) {
-    double x = self->_motionManager.magnetometerData.magneticField.x;
-    double y = self->_motionManager.magnetometerData.magneticField.y;
-    double z = self->_motionManager.magnetometerData.magneticField.z;
+//    double x = self->_motionManager.magnetometerData.magneticField.x;
+//    double y = self->_motionManager.magnetometerData.magneticField.y;
+//    double z = self->_motionManager.magnetometerData.magneticField.z;
+//    double timestamp = [Utils sensorTimestampToEpochMilliseconds:self->_motionManager.magnetometerData.timestamp];
+    
+    double x = self->_motionManager.deviceMotion.magneticField.field.x;
+    double y = self->_motionManager.deviceMotion.magneticField.field.y;
+    double z = self->_motionManager.deviceMotion.magneticField.field.z;
     double timestamp = [Utils sensorTimestampToEpochMilliseconds:self->_motionManager.magnetometerData.timestamp];
 
     if (self->logLevel > 0) {
@@ -111,16 +120,72 @@ RCT_EXPORT_METHOD(startUpdates) {
         NSLog(@"startUpdates/startMagnetometerUpdates");
     }
 
-    [self->_motionManager startMagnetometerUpdates];
+//    [self->_motionManager startMagnetometerUpdates];
+    [self->_motionManager startDeviceMotionUpdates];
+    self->_motionManager.showsDeviceMovementDisplay = true;
 
     /* Receive the magnetometer data on this block */
-    [self->_motionManager startMagnetometerUpdatesToQueue:[NSOperationQueue mainQueue]
-                                               withHandler:^(CMMagnetometerData *magnetometerData, NSError *error)
-     {
-         double x = magnetometerData.magneticField.x;
-         double y = magnetometerData.magneticField.y;
-         double z = magnetometerData.magneticField.z;
-         double timestamp = [Utils sensorTimestampToEpochMilliseconds:magnetometerData.timestamp];
+//    [self->_motionManager startMagnetometerUpdatesToQueue:[NSOperationQueue mainQueue]
+//                                               withHandler:^(CMMagnetometerData *magnetometerData, NSError *error)
+//     {
+//         double x = magnetometerData.magneticField.x;
+//         double y = magnetometerData.magneticField.y;
+//         double z = magnetometerData.magneticField.z;
+//         double timestamp = [Utils sensorTimestampToEpochMilliseconds:magnetometerData.timestamp];
+//
+//         if (self->logLevel > 1) {
+//             NSLog(@"Updated magnetometer values: %f, %f, %f, %f", x, y, z, timestamp);
+//         }
+//
+//         [self sendEventWithName:@"Magnetometer" body:@{
+//                                                           @"x" : [NSNumber numberWithDouble:x],
+//                                                           @"y" : [NSNumber numberWithDouble:y],
+//                                                           @"z" : [NSNumber numberWithDouble:z],
+//                                                           @"timestamp" : [NSNumber numberWithDouble:timestamp]
+//                                                       }];
+//     }];
+    
+//    [self->_motionManager startDeviceMotionUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMDeviceMotion *motion, NSError *error) {
+//        double x = motion.magneticField.field.x;
+//        double y = motion.magneticField.field.y;
+//        double z = motion.magneticField.accuracy;
+//
+////        double x = motion.userAcceleration.x;
+////        double y = motion.userAcceleration.y;
+////        double z = motion.userAcceleration.z;
+//
+////        double x = self->_motionManager.deviceMotion.magneticField.field.x;
+////        double y = self->_motionManager.deviceMotion.magneticField.field.y;
+////        double z = self->_motionManager.deviceMotion.magneticField.field.z;
+//
+//         double timestamp = motion.timestamp;
+//
+//         if (self->logLevel > 1) {
+//             NSLog(@"Updated magnetometer values: %f, %f, %f, %f", x, y, z, timestamp);
+//         }
+//
+//         [self sendEventWithName:@"Magnetometer" body:@{
+//                                                           @"x" : [NSNumber numberWithDouble:x],
+//                                                           @"y" : [NSNumber numberWithDouble:y],
+//                                                           @"z" : [NSNumber numberWithDouble:z],
+//                                                           @"timestamp" : [NSNumber numberWithDouble:timestamp]
+//                                                       }];
+//    }];
+    
+    [self->_motionManager startDeviceMotionUpdatesUsingReferenceFrame:  CMAttitudeReferenceFrameXMagneticNorthZVertical toQueue: [NSOperationQueue mainQueue] withHandler:^(CMDeviceMotion *motion, NSError *error) {
+        double x = motion.magneticField.field.x;
+        double y = motion.magneticField.field.y;
+        double z = motion.magneticField.field.z;
+        
+//        double x = motion.userAcceleration.x;
+//        double y = motion.userAcceleration.y;
+//        double z = motion.userAcceleration.z;
+        
+//        double x = self->_motionManager.deviceMotion.magneticField.field.x;
+//        double y = self->_motionManager.deviceMotion.magneticField.field.y;
+//        double z = self->_motionManager.deviceMotion.magneticField.field.z;
+        
+         double timestamp = motion.timestamp;
 
          if (self->logLevel > 1) {
              NSLog(@"Updated magnetometer values: %f, %f, %f, %f", x, y, z, timestamp);
@@ -132,8 +197,7 @@ RCT_EXPORT_METHOD(startUpdates) {
                                                            @"z" : [NSNumber numberWithDouble:z],
                                                            @"timestamp" : [NSNumber numberWithDouble:timestamp]
                                                        }];
-     }];
-
+    }];
 }
 
 RCT_EXPORT_METHOD(stopUpdates) {
@@ -141,7 +205,8 @@ RCT_EXPORT_METHOD(stopUpdates) {
         NSLog(@"stopUpdates");
     }
 
-    [self->_motionManager stopMagnetometerUpdates];
+//    [self->_motionManager stopMagnetometerUpdates];
+    [self->_motionManager stopDeviceMotionUpdates];
 }
 
 @end
